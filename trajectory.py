@@ -74,33 +74,25 @@ plt.legend()
 plt.show()
 
 
-def inverse_normalize_data(input_x, input_y):
-    input_x = input_x * (X_max - X_min) + X_min
-    if len(input_y) != 0:
-        input_y = input_y * (X_max[0] - X_min[0]) + X_min[0]
-    return input_x, input_y
-
-
 # Visualize actual vs predicted path for a pedestrian
 plt.figure(figsize=(10, 6))
 
-pedestrian_id = 1
+pedestrian_id = 51
 
-actual_trajectory = df[df['pedestrianId'] == pedestrian_id].drop(
-        columns=['pedestrianId']).values
+actual_trajectory, _ = normalize_data(
+    df[df['pedestrianId'] == pedestrian_id].drop(
+        columns=['pedestrianId']).values, [])
 
-plt.plot(actual_trajectory[:, 1],
-         actual_trajectory[:, 2],
+plt.plot(actual_trajectory[0][:, 1],
+         actual_trajectory[0][:, 2],
          marker='o', linestyle='-')
 
 trajectory_length = len(df[df['pedestrianId'] == pedestrian_id])
 
-initial_trajectory = actual_trajectory[0:sequence_length]
+initial_trajectory = actual_trajectory[:, 0:sequence_length]
 
-generated_trajectory = list([list(x) for x in initial_trajectory])
-initial_trajectory_normalized, _ = normalize_data(
-    initial_trajectory.reshape(1, sequence_length, num_features), [])
-previous_trajectory = initial_trajectory_normalized
+generated_trajectory = list([list(x) for x in initial_trajectory[0]])
+previous_trajectory = initial_trajectory
 
 for i in range(trajectory_length - sequence_length):
     next_step = model.predict(previous_trajectory)
@@ -109,9 +101,8 @@ for i in range(trajectory_length - sequence_length):
     previous_trajectory[0][-1] = next_step
 
 generated_trajectory = np.array(generated_trajectory)
-generated_trajectory, _ = inverse_normalize_data(generated_trajectory, [])
 
-plt.plot(generated_trajectory[0][:, 1],
-         generated_trajectory[0][:, 2],
+plt.plot(generated_trajectory[:, 1],
+         generated_trajectory[:, 2],
          marker='x', linestyle='-')
 plt.show()
