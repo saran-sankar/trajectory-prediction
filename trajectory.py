@@ -1,6 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
 
 data = pd.read_csv('data/eth/hotel/pixel_pos.csv')
 
@@ -26,24 +28,31 @@ for pedestrian_id in pedestrian_ids:
 X = np.array(X)
 y = np.array(y)
 
-# Normalize the data (optional but recommended)
+# Normalize the data
 X = (X - X.min()) / (X.max() - X.min())
 y = (y - y.min()) / (y.max() - y.min())
 
 # Reshape the data for LSTM input (samples, time steps, features)
 X = X.reshape(X.shape[0], sequence_length, 3)
 
-# plt.figure(figsize=(10, 6))
-#
-# plt.plot(df[1][df['pedestrianId'] == 1],
-#          df[2][df['pedestrianId'] == 1],
-#          marker='o', linestyle='-')
-#
-# # Add labels and legend
-# plt.title('Plot of DataFrame Rows')
-# plt.xlabel('Column')
-# plt.ylabel('Values')
-# plt.legend()
-#
-# # Show the plot
-# plt.show()
+# Build the LSTM model
+model = Sequential()
+model.add(LSTM(50, input_shape=(sequence_length, 3)))
+model.add(Dense(3))
+model.compile(optimizer='adam', loss='mse')
+
+# Train the model
+model.fit(X, y, epochs=10, batch_size=32, validation_split=0.2)
+
+# Make predictions
+predicted_values = model.predict(X)
+
+# Visualize the results (assuming one pedestrian for simplicity)
+plt.figure(figsize=(10, 6))
+plt.plot(y, label='True Values')
+plt.plot(predicted_values, label='Predicted Values')
+plt.title('Pedestrian Trajectory Prediction')
+plt.xlabel('Time Step')
+plt.ylabel('X Coordinate')
+plt.legend()
+plt.show()
